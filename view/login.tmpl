@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>登录页面</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/book-1.jpg'); /* 设置服务器上的背景图片路径 */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center ; /* 优先使用背景图片的下半部分 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            width: 400px;
+            text-align: center;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="submit"],
+        input[type="hidden"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        #img_captcha {
+            margin-top: 10px;
+        }
+        #img_captcha img {
+            width: 70%;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>图书管理系统</h1>
+    <form id="login_form">
+        <input type="text" name="name" id="name" placeholder="Your name">
+        <input type="password" name="password" id="password" placeholder="Password">
+        <input type="hidden" name="captcha_id" id="captcha_id">
+        <input type="text" name="captcha_value" id="captcha_value" placeholder="Captcha">
+        <!-- 创建新的提交按钮，用于注册 -->
+        <input type="submit" id="register_sub" value="注册">
+        <input type="submit" id="login_sub" value="登录">
+    </form>
+    <div id="img_captcha">
+        <img src="" alt="Captcha">
+    </div>
+    <button id="toggle_login">管理员登录</button>
+</div>
+<script>
+    $(document).ready(function () {
+        loadCaptcha();
+
+        $("#login_sub").on("click", function (event) {
+            event.preventDefault();
+            userLogin();
+        });
+
+        $("#toggle_login").on("click", function () {
+            var currentText = $(this).text();
+            if (currentText === "管理员登录") {
+                $(this).text("用户登录");
+                $("#login_sub").val("管理员登录");
+            } else {
+                $(this).text("管理员登录");
+                $("#login_sub").val("用户登录");
+            }
+        });
+
+        $("#img_captcha").on("click", function () {
+            loadCaptcha();
+        });
+    });
+
+    // 监听注册按钮的点击事件
+    $("#register_sub").on("click", function (event) {
+        event.preventDefault();
+        userRegister(); // 执行注册操作
+    });
+
+    function userRegister() {
+        // 获取用户输入的数据
+        var userData = {
+            name: $("#name").val(),
+            password: $("#password").val(),
+            email: $("#email").val(), // 获取邮箱地址
+            captcha_id: $("#captcha_id").val(),
+            captcha_value: $("#captcha_value").val()
+        };
+
+        $.ajax({
+            url: "/user/register", // 新的注册路由
+            data: userData,
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                if (data.code !== 0) {
+                    alert(data.message);
+                } else {
+                    alert("注册成功！");
+                    // 清空表单
+                    $("#name").val("");
+                    $("#password").val("");
+                    $("#email").val("");
+                    $("#captcha_id").val("");
+                    $("#captcha_value").val("");
+                    // 继续停留在登录页面
+                }
+            },
+            error: function () {
+                alert("请求失败!!!");
+            }
+        });
+    }
+
+    function userLogin() {
+        var loginType = $("#login_sub").val();
+        if (loginType === "管理员登录") {
+            adminLogin();
+        } else {
+            $.ajax({
+                url: "/user/login",
+                data: {
+                    name: $("#name").val(),
+                    password: $("#password").val(),
+                    captcha_id: $("#captcha_id").val(),
+                    captcha_value: $("#captcha_value").val()
+                },
+                type: "post",
+                dataType: "json",
+                success: function (data) {
+                    if (data.code !== 0) {
+                        alert(data.message);
+                    } else {
+                        alert("登录成功！");
+                        setTimeout(pageRedirect, 1500);
+                    }
+                },
+                error: function () {
+                    alert("请求失败!!!");
+                }
+            });
+        }
+    }
+
+    function adminLogin() {
+        // 添加管理员登录的逻辑
+        $.ajax({
+            url: "/admin/login",
+            data: {
+                name: $("#name").val(),
+                password: $("#password").val(),
+                captcha_id: $("#captcha_id").val(),
+                captcha_value: $("#captcha_value").val()
+            },
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                if (data.code !== 0) {
+                    alert(data.message);
+                } else {
+                    alert("管理员登录成功！");
+                    setTimeout(adminPageRedirect, 1500);
+                }
+            },
+            error: function () {
+                alert("请求失败!!!");
+            }
+        });
+    }
+
+    function pageRedirect() {
+        window.location.replace("/user/index");
+    }
+
+    function adminPageRedirect() {
+        window.location.replace("/admin/index");
+    }
+
+    function loadCaptcha() {
+        $.ajax({
+            url: "/user/captcha",
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                $("#img_captcha img").attr("src", data.data.data);
+                $("#captcha_id").val(data.data.captcha_id);
+            },
+            error: function () {
+                alert("请求失败!!!");
+            }
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书列表</title>
+    <style>
+        /* 样式可以根据需要自行调整 */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+        }
+        .sidebar {
+            width: 20%;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .book-list {
+            list-style: none;
+            padding: 0;
+        }
+        .book-item {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .page-item {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .page-item:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边导航栏 -->
+        <div class="sidebar">
+            <h2>导航栏</h2>
+            <ul>
+                <li><a href="#">图书列表</a></li>
+                <li><a href="#">个人中心</a></li>
+            </ul>
+        </div>
+        <!-- 内容区域 -->
+        <div class="content">
+            <h1>图书列表</h1>
+            <ul class="book-list" id="book-list">
+                <!-- 这里是动态生成的图书列表 -->
+                <!-- 通过后端动态生成 -->
+            </ul>
+            <!-- 分页器 -->
+            <div class="pagination" id="pagination">
+                <!-- 动态生成分页按钮 -->
+                <!-- 根据图书总数和每页显示数量计算按钮数量 -->
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentPage = 1; // 当前页码，默认为第一页
+
+        // 初始化页面加载
+        window.onload = function() {
+            loadBooks(currentPage);
+        };
+
+        // 加载指定页码的图书列表
+
+function loadBooks(page) {
+     // 发起 AJAX 请求，从后端获取指定页码的图书列表
+    $.ajax({
+        url: '/api/books', // 后端提供的图书列表接口
+        type: 'GET',
+        data: { page: page }, // 指定要获取的页码
+        dataType: 'json',
+        success: function(response) {
+            // 清空图书列表
+            $('#book-list').empty();
+
+            // 将返回的图书列表动态添加到页面上的图书列表中
+            response.books.forEach(function(book) {
+                var bookItem = `
+                    <div class="book-item">
+                        <img src="${book.image}" alt="${book.name}">
+                        <div class="book-details">
+                            <h3>${book.name}</h3>
+                            <p>作者：${book.author}</p>
+                            <p>价格：${book.price}</p>
+                            <p>借书库存：${book.borrowStock}</p>
+                            <p>买书库存：${book.buyStock}</p>
+                            <button onclick="borrowBook(${book.id})">借书</button>
+                            <button onclick="buyBook(${book.id})">买书</button>
+                        </div>
+                    </div>`;
+                $('#book-list').append(bookItem);
+            });
+
+            // 更新分页器
+            updatePagination(response.totalPages, response.currentPage);
+        },
+        error: function(xhr, status, error) {
+            console.error('Failed to load books:', error);
+        }
+    });
+}
+
+// 借书操作
+function borrowBook(bookId) {
+    // 发起 AJAX 请求，向后端发起借书操作
+    // 成功后可以刷新页面或更新相关 UI
+}
+
+// 买书操作
+function buyBook(bookId) {
+    // 发起 AJAX 请求，向后端发起买书操作
+    // 成功后可以刷新页面或更新相关 UI
+}
+
+// 更新分页器
+function updatePagination(totalPages, currentPage) {
+    // 清空分页器
+    $('#pagination').empty();
+
+    // 添加上一页按钮
+    if (currentPage > 1) {
+        $('#pagination').append(`<button onclick="loadBooks(${currentPage - 1})">上一页</button>`);
+    }
+
+    // 添加页码按钮
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            $('#pagination').append(`<button class="active">${i}</button>`);
+        } else {
+            $('#pagination').append(`<button onclick="loadBooks(${i})">${i}</button>`);
+        }
+    }
+
+    // 添加下一页按钮
+    if (currentPage < totalPages) {
+        $('#pagination').append(`<button onclick="loadBooks(${currentPage + 1})">下一页</button>`);
+    }
+}
+
+// 页面加载完成后，加载第一页的图书列表
+$(document).ready(function() {
+    loadBooks(1);
+});
+
+        // 点击分页按钮时加载对应页码的图书列表
+        function goToPage(page) {
+            loadBooks(page);
+        }
+
+        // 生成分页按钮
+        function renderPagination(totalPages) {
+            const paginationElement = document.getElementById('pagination');
+            paginationElement.innerHTML = ''; // 清空分页器
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('span');
+                pageItem.textContent = i;
+                pageItem.classList.add('page-item');
+                pageItem.addEventListener('click', () => goToPage(i));
+                paginationElement.appendChild(pageItem);
+            }
+        }
+    </script>
+</body>
+</html>
